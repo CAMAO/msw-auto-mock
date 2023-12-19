@@ -157,6 +157,8 @@ function transformStringBasedOnFormat(format?: string, key?: string) {
     return `faker.date.past()`;
   } else if (format === 'uuid') {
     return `faker.datatype.uuid()`;
+  } else if (format === 'nanoid') {
+    return `faker.datatype.nanoid()`;
   } else if (['idn-email', 'email'].includes(format ?? '') || key?.toLowerCase().endsWith('email')) {
     return `faker.internet.email()`;
   } else if (['hostname', 'idn-hostname'].includes(format ?? '')) {
@@ -173,6 +175,12 @@ function transformStringBasedOnFormat(format?: string, key?: string) {
       return `faker.image.url()`;
     }
     return `faker.internet.url()`;
+  } else if (key?.toLowerCase().endsWith('name') && key?.toLowerCase().includes('company')) {
+    return `faker.company.name()`;
+  } else if (key?.toLowerCase().endsWith('name') && (key?.toLowerCase().includes('last') || key?.toLowerCase().includes('family') || key?.toLowerCase().includes('surname'))) {
+    return `faker.person.lastName()`;
+  } else if (key?.toLowerCase().endsWith('name') && (key?.toLowerCase().includes('first') || key?.toLowerCase().includes('common'))) {
+    return `faker.person.firstName()`;
   } else if (key?.toLowerCase().endsWith('name')) {
     return `faker.person.fullName()`;
   } else {
