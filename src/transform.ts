@@ -120,7 +120,7 @@ function transformJSONSchemaToFakerCode(jsonSchema?: OpenAPIV3.SchemaObject, key
 
   switch (jsonSchema.type) {
     case 'string':
-      return transformStringBasedOnFormat(jsonSchema.format, key);
+      return transformStringBasedOnFormat(jsonSchema.format, key, jsonSchema.pattern, jsonSchema.minLength, jsonSchema.maxLength);
     case 'number':
     case 'integer':
       return `faker.number.int({ min: ${jsonSchema.minimum}, max: ${jsonSchema.maximum} })`;
@@ -152,13 +152,19 @@ function transformJSONSchemaToFakerCode(jsonSchema?: OpenAPIV3.SchemaObject, key
 /**
  * See https://json-schema.org/understanding-json-schema/reference/string.html#built-in-formats
  */
-function transformStringBasedOnFormat(format?: string, key?: string) {
+function transformStringBasedOnFormat(format?: string, key?: string, pattern?: string, minLength?: number, maxLength?: number) {
   if (['date-time', 'date', 'time'].includes(format ?? '') || key?.toLowerCase().endsWith('_at')) {
     return `faker.date.past()`;
   } else if (format === 'uuid') {
-    return `faker.datatype.uuid()`;
+    return `faker.string.uuid()`;
   } else if (format === 'nanoid') {
-    return `faker.datatype.nanoid()`;
+    if (minLength && maxLength) {
+      return `faker.string.nanoid({ min: ${minLength}, max: ${maxLength}})`;
+    }
+    if (minLength) {
+      return `faker.string.nanoid(${minLength})`;
+    }
+    return `faker.string.nanoid()`;
   } else if (['idn-email', 'email'].includes(format ?? '') || key?.toLowerCase().endsWith('email')) {
     return `faker.internet.email()`;
   } else if (['hostname', 'idn-hostname'].includes(format ?? '')) {
@@ -183,7 +189,23 @@ function transformStringBasedOnFormat(format?: string, key?: string) {
     return `faker.person.firstName()`;
   } else if (key?.toLowerCase().endsWith('name')) {
     return `faker.person.fullName()`;
+  } else if (pattern) {
+    return `faker.helpers.fromRegExp(${pattern})`;
+  } else if (format == 'alphanumeric') {
+    if (minLength && maxLength) {
+      return `faker.string.alphanumeric({ min: ${minLength}, max: ${maxLength}})`;
+    }
+    if (minLength) {
+      return `faker.string.alphanumeric(${minLength})`;
+    }
+    return `faker.string.alphanumeric()`;
   } else {
-    return `faker.lorem.slug(1)`;
+    if (minLength && maxLength) {
+      return `faker.lorem.slug({ min: ${minLength}, max: ${maxLength}})`;
+    }
+    if (minLength) {
+      return `faker.lorem.slug(${minLength})`;
+    }
+    return `faker.lorem.text()`;
   }
 }
